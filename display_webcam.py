@@ -1,7 +1,13 @@
 import cv2 as cv
+import sys
 
 def display_webcam():
-    camera = cv.VideoCapture(0)         # 0 is the default camera if you have multiple try 1,2, or 3 etc.
+    try:
+        camera = cv.VideoCapture(0)         # 0 is the default camera if you have multiple try 1,2, or 3 etc.
+    except:
+        print("Error getting camera or video.")
+        quit()                              # Emd Script
+
     print("Web Cam Displaying. Press q to quit.")
     while True:
         isTrue, frame = camera.read()       # Read frame.
