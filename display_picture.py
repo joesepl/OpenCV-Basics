@@ -8,8 +8,8 @@ def display_picture(window_name, file_name, imread_mode=cv.IMREAD_COLOR_BGR):
         print("Couldn't get image file.")
         quit()
 
-    cv.imshow(window_name, img)                  # Display the image. 
-    cv.waitKey(0)                                # Wait for a key press to resume.
+    cv.imshow(window_name, img)                      # Display the image. 
+    cv.waitKey(0)                                    # Wait for a key press to resume. 
 
 
 def main():
