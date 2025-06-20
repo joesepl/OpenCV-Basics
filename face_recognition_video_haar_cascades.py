@@ -32,15 +32,9 @@ while True:
 
         # Loop through all detected faces and draw rectangles around them
         cntr = 0
-        for num_of_faces in faces_rect:
-            print(
-                "num of faces", num_of_faces
-            )  # Print the coordinates and size of each detected face
-            x, y, w, h = faces_rect[
-                cntr, 0:4
-            ]  # Get the position and size of the current face
+        for x, y, w, h in faces_rect:
             cv.rectangle(
-                frame, (x, y), (x + w, y + h), 255, 2
+                frame, (x, y), (x + w, y + h), (0, 255, 0), 2
             )  # Draw a rectangle around the face
             cntr += 1
         print(
