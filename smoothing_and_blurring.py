@@ -1,7 +1,7 @@
 import cv2 as cv
 
 # Read the image from the specified path
-img = cv.imread('Photos/Guts.jpg')
+img = cv.imread('Photos/Griffith.jpg')
 cv.imshow('Guts', img)
 
 # Averaging Blur:
