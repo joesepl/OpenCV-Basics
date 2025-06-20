@@ -1,20 +1,20 @@
 import cv2 as cv
 import numpy as np
-img = cv.imread('Photos/Guts.jpg')
-cv.imshow('Original', img)
 
-#_________________________________________________Contour DETECTION_________________________________
-#1. change to gray scale
-#2. find edges
-#3. Blur
-#4. use contours method 
+img = cv.imread("Photos/Guts.jpg")
+cv.imshow("Original", img)
+
+# _________________________________________________Contour DETECTION_________________________________
+# 1. change to gray scale
+# 2. find edges
+# 3. Blur
+# 4. use contours method
 
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-cv.imshow('Gray Scale', gray)
+cv.imshow("Gray Scale", gray)
 
 canny = cv.Canny(gray, 125, 175)
-cv.imshow('Canny Edges', canny)
-
+cv.imshow("Canny Edges", canny)
 
 
 contours, heirarchies = cv.findContours(canny, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
@@ -52,19 +52,23 @@ contours, heirarchies = cv.findContours(canny, cv.RETR_LIST, cv.CHAIN_APPROX_NON
 # cv.CHAIN_APPROX_NONE (what you have): Stores all points. Use this only if you need every single boundary point for a high-precision analysis, which is rare.
 # cv.CHAIN_APPROX_SIMPLE: This is the most commonly used method. It dramatically compresses the contours by storing only the essential vertices. For a straight line, it will only store the two endpoints. For a rectangle, it will only store the four corner points. This saves a huge amount of memory and processing time with almost no loss of practical information.
 
-print(f'{len(contours)} contour(s) found!')
+print(f"{len(contours)} contour(s) found!")
 
-blur = cv.GaussianBlur(canny, (5,5), cv.BORDER_DEFAULT)        # this will decrease how many contours we get.
-cv.imshow('Blur', blur)
+blur = cv.GaussianBlur(
+    canny, (5, 5), cv.BORDER_DEFAULT
+)  # this will decrease how many contours we get.
+cv.imshow("Blur", blur)
 contours, heirarchies = cv.findContours(blur, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
-print(f'{len(contours)} contour(s) found!')
+print(f"{len(contours)} contour(s) found!")
 
-#another way to find contours instead of canny edge detector
-ret, thresh = cv.threshold(gray, 125, 255, cv.THRESH_BINARY)  #looks at an image and tries to binarize that image based on its intensity. Turns it into 0 or 1 white or black.
-cv.imshow('thresh', thresh)
+# another way to find contours instead of canny edge detector
+ret, thresh = cv.threshold(
+    gray, 125, 255, cv.THRESH_BINARY
+)  # looks at an image and tries to binarize that image based on its intensity. Turns it into 0 or 1 white or black.
+cv.imshow("thresh", thresh)
 contours, heirarchies = cv.findContours(thresh, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
-print(f'{len(contours)} contour(s) found!')
-#In short: Use Canny for finding edges. Use Thresholding for finding solid shapes and separating foreground from background.
+print(f"{len(contours)} contour(s) found!")
+# In short: Use Canny for finding edges. Use Thresholding for finding solid shapes and separating foreground from background.
 
 ret, thresh = cv.threshold(gray, 125, 255, cv.THRESH_BINARY)
 
@@ -114,17 +118,27 @@ ret, thresh = cv.threshold(gray, 125, 255, cv.THRESH_BINARY)
 # cv.imshow('Otsu Threshold', otsu_thresh)
 # print(f"Otsu's method found the optimal threshold to be: {ret}")
 # This is the go-to method when you need a robust, automatic way to binarize an image without manually tuning a threshold value.
-#Draw the contours
-blank_img = np.zeros(img.shape, dtype='uint8') # here we make an np array of zeros and pass it the shape of img.Make each value a uint8
-cv.drawContours(blank_img, contours, -1, (0,0,255), 1) # Pass the blank image the size of the original imgage, list of contours, how many contours we want (-1 is all of em), the color to draw, the thickness
-cv.imshow('contours image', blank_img)
+# Draw the contours
+blank_img = np.zeros(
+    img.shape, dtype="uint8"
+)  # here we make an np array of zeros and pass it the shape of img.Make each value a uint8
+cv.drawContours(
+    blank_img, contours, -1, (0, 0, 255), 1
+)  # Pass the blank image the size of the original imgage, list of contours, how many contours we want (-1 is all of em), the color to draw, the thickness
+cv.imshow("contours image", blank_img)
 
 
-#draw the contours of canny
-blank_img = np.zeros(img.shape, dtype='uint8') # here we make an np array of zeros and pass it the shape of img.Make each value a uint8
-contours_canny, heirarchies_canny = cv.findContours(canny, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
-print(f'{len(contours_canny)} contour(s) found!')
-cv.drawContours(blank_img, contours_canny, -1, (0,0,255), 1) # Pass the blank image the size of the original imgage, list of contours, how many contours we want (-1 is all of em), the color to draw, the thickness
-cv.imshow('contours canny', blank_img)
+# draw the contours of canny
+blank_img = np.zeros(
+    img.shape, dtype="uint8"
+)  # here we make an np array of zeros and pass it the shape of img.Make each value a uint8
+contours_canny, heirarchies_canny = cv.findContours(
+    canny, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE
+)
+print(f"{len(contours_canny)} contour(s) found!")
+cv.drawContours(
+    blank_img, contours_canny, -1, (0, 0, 255), 1
+)  # Pass the blank image the size of the original imgage, list of contours, how many contours we want (-1 is all of em), the color to draw, the thickness
+cv.imshow("contours canny", blank_img)
 
 cv.waitKey(0)

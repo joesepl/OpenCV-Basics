@@ -30,10 +30,6 @@ cv.imshow("Simple Thresholded Inverse", thresh_inv)
 # Adaptive Thresholding
 # Unlike simple thresholding, adaptive thresholding calculates the threshold for smaller regions of the image.
 # This is useful when lighting conditions are not uniform across the image.
-# The Mechanic: Instead of using one global value for the whole image, adaptive thresholding calculates a different, unique threshold for each small region of the image.
-# For every single pixel in the image, OpenCV looks at a small neighborhood around it (e.g., an 11x11 square).
-# It calculates a threshold value based only on the pixels within that small neighborhood.
-# It then applies this unique, local threshold to the center pixel.
 # Function signature: cv.adaptiveThreshold(src, maxValue, adaptiveMethod, thresholdType, blockSize, C) -> dst
 #   src: input grayscale image
 #   maxValue: value to assign if condition is met (e.g., 255)

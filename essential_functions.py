@@ -1,7 +1,7 @@
 import cv2 as cv
 
-img = cv.imread('Photos/Guts.jpg')
-cv.imshow('Guts', img)
+img = cv.imread("Photos/Guts.jpg")
+cv.imshow("Guts", img)
 
 # # Converting to grayscale
 # gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -28,19 +28,23 @@ cv.imshow('Guts', img)
 # cv.imshow('eroded', eroded)
 
 # Resize Image
-resize = cv.resize(img, (500,1280)) #resizes image ignoring aspect ratio
-cv.imshow('resized', resize)
+resize = cv.resize(img, (500, 1280))  # resizes image ignoring aspect ratio
+cv.imshow("resized", resize)
 
 # Resize Image Keeping Aspect Ratio
-resized_with_ratio = cv.resize(img, (300,150), interpolation=cv.INTER_AREA) #use interpolation cv.INTER_AREA for shrinking an image. cv.INTER_CUBIC for highest quality but slowest processing scaling image to be bigger or cv.LINEAR for a faster lower quality enlarging interpolation
-cv.imshow('resized ratio', resized_with_ratio)
+resized_with_ratio = cv.resize(
+    img, (300, 150), interpolation=cv.INTER_AREA
+)  # use interpolation cv.INTER_AREA for shrinking an image. cv.INTER_CUBIC for highest quality but slowest processing scaling image to be bigger or cv.LINEAR for a faster lower quality enlarging interpolation
+cv.imshow("resized ratio", resized_with_ratio)
 
 # Resize Image Keeping Aspect Ratio - Enlarging
-resized_ratio_enlarge = cv.resize(img, (500,1280), interpolation=cv.INTER_CUBIC)    #supposedly better for scaling
-cv.imshow('intercubic enlarge', resized_ratio_enlarge)
+resized_ratio_enlarge = cv.resize(
+    img, (500, 1280), interpolation=cv.INTER_CUBIC
+)  # supposedly better for scaling
+cv.imshow("intercubic enlarge", resized_ratio_enlarge)
 
 # Cropping
 cropped = img[50:200, 200:400]
-cv.imshow('cropped', cropped)
+cv.imshow("cropped", cropped)
 
 cv.waitKey(0)
