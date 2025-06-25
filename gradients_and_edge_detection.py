@@ -66,6 +66,11 @@ cv.imshow("combined sobel", combined_sobel)
 #   image: input image (grayscale)
 #   threshold1: lower threshold for edge detection
 #   threshold2: upper threshold for edge detection
+#     In Canny, the lower and upper thresholds are used for edge linking by hysteresis:
+#     - Pixels with a gradient above the upper threshold are considered strong edges.
+#     - Pixels below the lower threshold are suppressed (not edges).
+#     - Pixels between the two are considered edges only if they are connected to strong edge pixels.
+#     This helps keep only real, connected edges and reduces noise or weak, isolated responses.
 #   apertureSize, L2gradient: optional parameters for kernel size and gradient calculation
 # Returns: a binary image with detected edges
 canny = cv.Canny(gray, 150, 175)

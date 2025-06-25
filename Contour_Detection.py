@@ -17,7 +17,7 @@ canny = cv.Canny(gray, 125, 175)
 cv.imshow("Canny Edges", canny)
 
 
-contours, heirarchies = cv.findContours(canny, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
+# ___________________________________________________________________FIND CONTOURS EXPLANATION_________________________________________________________
 # The INPUTS (Parameters)
 # canny: This is the source image. Crucially, this function must be given a binary image (single-channel, black and white). The variable name canny implies it's the output of an edge detection algorithm like cv.Canny, which is a perfect input. A simple thresholded image also works. You cannot pass a regular BGR color image directly.
 # cv.RETR_LIST: This is the contour retrieval mode. It tells OpenCV how to organize the contours it finds, specifically their relationships to each other (e.g., if one shape is inside another). RETR_LIST is one of the simplest modes; it retrieves all contours but doesn't create any parent-child relationships. They are all returned as a flat list.
@@ -41,7 +41,6 @@ contours, heirarchies = cv.findContours(canny, cv.RETR_LIST, cv.CHAIN_APPROX_NON
 
 # Variations of the Retrieval Mode (cv.RETR_...)
 # This choice depends on whether you care about shapes nested inside other shapes.
-
 # cv.RETR_LIST (what you have): Gets all contours in a flat list. Good and simple if you don't care about relationships.
 # cv.RETR_EXTERNAL: Most commonly used for simple cases. It only retrieves the "parent" or outermost contours and ignores any shapes that are inside another shape. If you just want to find the outline of each object, this is the one to use.
 # cv.RETR_CCOMP: Retrieves all contours and organizes them into a two-level hierarchy. It groups all the external "parent" contours and the "hole" contours directly inside them.
@@ -51,6 +50,8 @@ contours, heirarchies = cv.findContours(canny, cv.RETR_LIST, cv.CHAIN_APPROX_NON
 # This choice affects how much memory your contours use.
 # cv.CHAIN_APPROX_NONE (what you have): Stores all points. Use this only if you need every single boundary point for a high-precision analysis, which is rare.
 # cv.CHAIN_APPROX_SIMPLE: This is the most commonly used method. It dramatically compresses the contours by storing only the essential vertices. For a straight line, it will only store the two endpoints. For a rectangle, it will only store the four corner points. This saves a huge amount of memory and processing time with almost no loss of practical information.
+# ______________________________________________________________________________________________________________________________________________________________________________________________
+contours, heirarchies = cv.findContours(canny, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
 
 print(f"{len(contours)} contour(s) found!")
 
@@ -61,6 +62,7 @@ cv.imshow("Blur", blur)
 contours, heirarchies = cv.findContours(blur, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
 print(f"{len(contours)} contour(s) found!")
 
+
 # another way to find contours instead of canny edge detector
 ret, thresh = cv.threshold(
     gray, 125, 255, cv.THRESH_BINARY
@@ -70,8 +72,8 @@ contours, heirarchies = cv.findContours(thresh, cv.RETR_LIST, cv.CHAIN_APPROX_SI
 print(f"{len(contours)} contour(s) found!")
 # In short: Use Canny for finding edges. Use Thresholding for finding solid shapes and separating foreground from background.
 
-ret, thresh = cv.threshold(gray, 125, 255, cv.THRESH_BINARY)
 
+ret, thresh = cv.threshold(gray, 125, 255, cv.THRESH_BINARY)
 # gray: The input image, which must be grayscale.
 # 125: This is the threshold value (thresh). This is your cutoff point.
 # 255: This is the maximum value (maxval). It's the value that will be assigned to pixels that pass the threshold test.
@@ -101,7 +103,6 @@ ret, thresh = cv.threshold(gray, 125, 255, cv.THRESH_BINARY)
 # 2. Adaptive Thresholding (Very Common!)
 # Instead of one global threshold for the whole image, adaptive thresholding calculates a different threshold for different small regions of the image. This is extremely effective for images with varying lighting conditions (e.g., one side is in shadow).
 
-# Python
 
 # adaptive_thresh = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_MEAN_C,
 #                                      cv.THRESH_BINARY, 11, 3)

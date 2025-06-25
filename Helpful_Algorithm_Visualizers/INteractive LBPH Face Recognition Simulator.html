@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LBPH Face Recognition Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* gray-900 */
+        }
+        .grid {
+            display: grid;
+            border: 1px solid #4b5563; /* gray-600 */
+        }
+        .grid-cell {
+            width: 35px;
+            height: 35px;
+            border: 1px solid #374151; /* gray-700 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            color: #d1d5db; /* gray-300 */
+            position: relative;
+            transition: background-color 0.3s;
+        }
+        .kernel-highlight {
+            box-shadow: inset 0 0 0 3px #f59e0b; /* amber-500 */
+            z-index: 10;
+        }
+        .center-pixel-highlight {
+            box-shadow: inset 0 0 0 3px #ef4444; /* red-500 */
+            z-index: 10;
+        }
+        .neighbor-comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 120px;
+            margin: auto;
+        }
+        .neighbor-cell {
+            width: 35px;
+            height: 35px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+        }
+        .binary-bit {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 0 4px;
+            transition: color 0.2s;
+        }
+        .histogram-container {
+            border: 1px solid #4b5563;
+            padding: 8px;
+            margin-top: 8px;
+        }
+        .histogram-bar {
+            width: 100%;
+            transition: height 0.2s;
+            align-self: flex-end;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 10px;
+        }
+        .legend-color-box {
+            width: 12px;
+            height: 12px;
+            margin-right: 4px;
+            border: 1px solid #6b7280;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            background-color: #374151; /* bg-gray-700 */
+            color: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+            transition: background-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+            outline: none;
+        }
+        .btn:hover {
+            background-color: #4b5563; /* bg-gray-600 */
+        }
+        .btn:focus {
+            box-shadow: 0 0 0 2px #6366f1, 0 0 0 4px #1f2937; /* focus:ring-indigo-500, focus:ring-offset-gray-800 */
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .tutorial-section h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+        .tutorial-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fbbf24; /* text-amber-300 */
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .tutorial-section p {
+            color: #d1d5db; /* text-gray-300 */
+            margin-bottom: 0.5rem;
+            line-height: 1.625;
+        }
+        .tutorial-section code {
+            background-color: #111827; /* bg-gray-900 */
+            color: #ec4899; /* text-pink-400 */
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        .tutorial-section ul {
+            list-style-type: disc;
+            list-style-position: inside;
+            padding-left: 1rem;
+        }
+    </style>
+</head>
+<body class="text-gray-200 p-4">
+
+    <div class="w-full max-w-7xl mx-auto">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-white">LBPH Face Recognition Simulator</h1>
+            <p class="mt-2 text-lg text-gray-400">Visualize how LBP texture patterns and histograms are created.</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="bg-gray-800 p-4 rounded-xl shadow-lg mb-6 flex flex-wrap items-center justify-center gap-4">
+            <button id="startBtn" class="btn bg-green-600 hover:bg-green-500">Start</button>
+            <button id="pauseBtn" class="btn bg-yellow-600 hover:bg-yellow-500" disabled>Pause</button>
+            <button id="resetBtn" class="btn bg-red-600 hover:bg-red-500">Reset</button>
+            <div class="h-8 border-l border-gray-600 mx-2"></div>
+            <div class="flex items-center gap-2">
+                <label for="speedRange" class="font-medium">Speed:</label>
+                <input type="range" id="speedRange" min="50" max="1500" value="750" step="50" class="w-32">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+            <!-- STAGE 1: LBP CALCULATION -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg col-span-1 xl:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <h2 class="text-2xl font-semibold text-center mb-4 text-white">Input Grayscale Patch</h2>
+                    <div id="inputGrid" class="grid mx-auto"></div>
+                </div>
+                <div class="bg-gray-900 p-4 rounded-lg">
+                    <h3 class="text-xl font-semibold text-center mb-2">Stage 1: LBP Calculation</h3>
+                    <p id="statusText" class="text-center text-amber-400 h-6 mb-2"></p>
+                    <div class="text-center mb-4">
+                        <p>Center Pixel: <span id="centerPixelValue" class="font-bold text-red-400"></span></p>
+                    </div>
+                    <div class="neighbor-comparison-grid mb-4"></div>
+                    <div class="text-center font-mono text-lg mb-2">
+                        <p>Binary: <span id="binaryString"></span></p>
+                        <p>Decimal: <span id="decimalValue" class="font-bold text-green-400"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STAGE 2: HISTOGRAMS -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold text-center mb-4 text-white">LBP Result & Histograms</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="text-xl font-semibold text-center mb-2">LBP Image</h3>
+                        <div id="lbpGrid" class="grid mx-auto"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-center mb-2">Stage 2: Histograms</h3>
+                        <p class="text-center text-sm text-gray-400 h-6 mb-2">Grid histograms are built here.</p>
+                        <div id="histogramsContainer" class="grid grid-cols-2 gap-2"></div>
+                    </div>
+                </div>
+                 <div id="legendContainer" class="mt-4 grid grid-cols-4 gap-x-2 gap-y-1"></div>
+                 <div class="mt-4 bg-gray-900 p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg mb-2">Final Feature Vector:</h3>
+                    <p class="text-gray-300 text-xs font-mono break-all" id="featureVector"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tutorial Section -->
+        <div class="w-full mt-8 p-6 bg-gray-800 rounded-xl shadow-lg tutorial-section">
+            <h2>How This Algorithm Works</h2>
+            <p>The LBPH (Local Binary Patterns Histograms) algorithm is a powerful method for **face recognition** (identifying *who* a person is), which is different from face detection (finding where a face is). It works by analyzing an image's texture in two main stages.</p>
+
+            <h3>Stage 1: Local Binary Patterns (LBP)</h3>
+            <p>The first stage creates a "texture map" of the face. For every pixel in the original grayscale image, it performs a small calculation to describe the texture in its immediate neighborhood.</p>
+            <ul>
+                <li><strong>1. Compare to Neighbors:</strong> The algorithm looks at a small 3x3 window around a central pixel. It compares the brightness of the center pixel to each of its 8 neighbors.</li>
+                <li><strong>2. Generate a Binary Code:</strong> If a neighbor is brighter than or equal to the center, it gets a '1'. If it's darker, it gets a '0'.</li>
+                <li><strong>3. The Clockwise Order:</strong> To build the 8-digit binary number, the algorithm reads these 1s and 0s in a consistent clockwise circle, starting from the top-left neighbor. This ensures the same texture always produces the same binary code.</li>
+                <li><strong>4. Create Decimal Value:</strong> This binary number is converted into a regular decimal number (from 0 to 255). This number becomes the new value for that pixel in the "LBP Image". The LBP Image is a map where each pixel value represents a specific local texture pattern.</li>
+            </ul>
+
+            <h3>Stage 2: Histograms of Patterns</h3>
+            <p>The LBP Image contains too much data to compare directly. Stage 2 summarizes this data in a clever way.</p>
+            <ul>
+                <li><strong>1. Divide into a Grid:</strong> The LBP Image is divided into a grid of smaller, equal-sized cells (in this simulator, a 2x2 grid).</li>
+                <li><strong>2. Create a Histogram for Each Cell:</strong> For each cell, the algorithm creates a histogram. A histogram is simply a bar chart that counts how many times each texture pattern appears within that cell.</li>
+                <li><strong>What Each Bar Represents:</strong> To make the histogram manageable, the 256 possible LBP values are grouped into 8 "bins". The first bar counts all LBP values from 0-31, the second bar counts values from 32-63, and so on. The height of the bar shows how common that range of textures is in that specific region of the face.</li>
+                <li><strong>3. Concatenate into a Feature Vector:</strong> Finally, all of these small histograms are joined together, one after another, into one single, giant list of numbers. This list is the final "feature vector"—a unique statistical fingerprint of the face's texture.</li>
+            </ul>
+
+            <h3>How is this Used for Face Recognition? (The "Fingerprint" Analogy)</h3>
+            <p>The algorithm has no concept of a "face". It works by creating and comparing these numerical texture fingerprints.</p>
+            <ul>
+                <li><strong>Training Phase:</strong> You show the algorithm many photos of "Person 1". For each photo, it calculates the texture fingerprint (the feature vector) and stores it with the label "Person 1". You repeat this for "Person 2", "Person 3", etc. This builds a database of known fingerprints. This is done with the <code>train()</code> function.</li>
+                <li><strong>Recognition Phase:</strong> You show the algorithm a new, unknown face. It calculates the fingerprint for this new face. It then mathematically compares this new fingerprint to all the known fingerprints in its database. The label belonging to the closest matching fingerprint is the algorithm's prediction for who the person is. This is done with the <code>predict()</code> function.</li>
+            </ul>
+
+
+            <h3>Key <code>LBPHFaceRecognizer</code> Parameters in OpenCV</h3>
+            <p>When you create the recognizer in OpenCV with <code>cv2.face.LBPHFaceRecognizer_create()</code>, you can tune its behavior with these parameters:</p>
+            <ul>
+                <li><code>radius</code>: The radius of the circular neighborhood for the LBP calculation (default is 1). A larger radius captures larger texture patterns.</li>
+                <li><code>neighbors</code>: The number of sample points in the neighborhood (default is 8).</li>
+                <li><code>grid_x</code> and <code>grid_y</code>: The number of cells the LBP image is divided into horizontally and vertically (default is 8 for both). More cells create a more detailed but larger feature vector.</li>
+                <li><code>threshold</code>: Used during prediction. It's a confidence score. If the distance to the closest match is below this threshold, the recognizer reports a match; otherwise, it reports "unknown".</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 6;
+        const LBP_GRID_SIZE = GRID_SIZE - 2;
+        const HIST_GRID_SIZE = 2; // Divide LBP into a 2x2 grid
+        const HIST_BINS = 8; // For simplicity, show 8 bins
+        
+        // Colors for each histogram bin
+        const binColors = [
+            '#3b82f6', // blue-500
+            '#22c55e', // green-500
+            '#eab308', // yellow-500
+            '#f97316', // orange-500
+            '#ec4899', // pink-500
+            '#a855f7', // purple-500
+            '#14b8a6', // teal-500
+            '#64748b'  // slate-500
+        ];
+        
+        const inputGridEl = document.getElementById('inputGrid');
+        const lbpGridEl = document.getElementById('lbpGrid');
+        const neighborGridEl = document.querySelector('.neighbor-comparison-grid');
+        const histogramsContainerEl = document.getElementById('histogramsContainer');
+        const legendContainerEl = document.getElementById('legendContainer');
+
+        let inputMatrix = [];
+        let lbpMatrix = [];
+
+        let animationInterval;
+        let animationSpeed = 750;
+        let isPaused = false;
+        let currentX = 1, currentY = 1;
+
+        function createGrid(container, size, matrix) {
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('grid-cell');
+                    const value = matrix[y][x];
+                    cell.textContent = value;
+                    cell.style.backgroundColor = `rgb(${value}, ${value}, ${value})`;
+                    container.appendChild(cell);
+                }
+            }
+        }
+        
+        function initData() {
+            // Initial sample data for the grayscale patch
+            inputMatrix = [
+                [30, 80, 70, 60, 50, 40],
+                [40, 90, 180, 190, 80, 50],
+                [50, 100, 200, 210, 110, 60],
+                [60, 120, 220, 230, 130, 70],
+                [70, 80, 100, 110, 90, 60],
+                [80, 90, 80, 70, 60, 50]
+            ];
+            // Initialize LBP matrix with the correct dimensions (4x4)
+            lbpMatrix = Array(LBP_GRID_SIZE).fill().map(() => Array(LBP_GRID_SIZE).fill(0));
+            document.getElementById('featureVector').textContent = '';
+        }
+
+        function resetSimulation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPaused = false;
+            currentX = 1;
+            currentY = 1;
+
+            initData();
+            createGrid(inputGridEl, GRID_SIZE, inputMatrix);
+            createGrid(lbpGridEl, LBP_GRID_SIZE, lbpMatrix);
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('pauseBtn').textContent = 'Pause';
+            document.getElementById('statusText').textContent = 'Ready to Start';
+            clearHighlights();
+            clearAnalysis();
+            clearHistograms();
+            createLegend();
+        }
+
+        function startAnimation() {
+            if (animationInterval) return;
+            resetSimulation(); // Start fresh
+            isPaused = false;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            animationInterval = setInterval(animationStep, animationSpeed);
+        }
+
+        function pauseAnimation() {
+            if (!animationInterval) return;
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').textContent = isPaused ? 'Resume' : 'Pause';
+        }
+
+        function animationStep() {
+            if (isPaused) return;
+            runLBPStep();
+        }
+        
+        function runLBPStep() {
+            clearHighlights();
+            
+            if (currentY >= GRID_SIZE - 1) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+                document.getElementById('statusText').textContent = 'Stage 2: Building Histograms';
+                calculateAndDisplayAllHistograms();
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('pauseBtn').disabled = true;
+                return;
+            }
+            
+            document.getElementById('statusText').textContent = `Stage 1: Calculating LBP at (${currentX-1}, ${currentY-1})`;
+
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    const cell = inputGridEl.children[(currentY + dy) * GRID_SIZE + (currentX + dx)];
+                    cell.classList.add('kernel-highlight');
+                }
+            }
+            const centerCell = inputGridEl.children[currentY * GRID_SIZE + currentX];
+            centerCell.classList.add('center-pixel-highlight');
+
+            const centerValue = inputMatrix[currentY][currentX];
+            document.getElementById('centerPixelValue').textContent = centerValue;
+
+            const neighbors = [
+                inputMatrix[currentY - 1][currentX - 1], inputMatrix[currentY - 1][currentX], inputMatrix[currentY - 1][currentX + 1],
+                inputMatrix[currentY][currentX + 1],
+                inputMatrix[currentY + 1][currentX + 1], inputMatrix[currentY + 1][currentX], inputMatrix[currentY + 1][currentX - 1],
+                inputMatrix[currentY][currentX - 1]
+            ];
+
+            neighborGridEl.innerHTML = '';
+            
+            const displayNeighbors = [
+                neighbors[0], neighbors[1], neighbors[2],
+                neighbors[7], centerValue, neighbors[3],
+                neighbors[6], neighbors[5], neighbors[4]
+            ];
+            
+            displayNeighbors.forEach((val, i) => {
+                const nCell = document.createElement('div');
+                nCell.classList.add('neighbor-cell');
+                nCell.textContent = val;
+                nCell.style.backgroundColor = (val >= centerValue && i !== 4) ? '#a3e635' : '#4b5563';
+                if (i === 4) {
+                    nCell.style.backgroundColor = '#ef4444';
+                    nCell.style.color = 'white';
+                }
+                neighborGridEl.appendChild(nCell);
+            });
+
+            setTimeout(() => {
+                let decimalValue = 0;
+                let binarySpan = document.getElementById('binaryString');
+                binarySpan.innerHTML = '';
+                
+                neighbors.forEach((nVal, i) => {
+                    const bit = (nVal >= centerValue) ? 1 : 0;
+                    const bitSpan = document.createElement('span');
+                    bitSpan.classList.add('binary-bit');
+                    bitSpan.textContent = bit;
+                    binarySpan.appendChild(bitSpan);
+                    decimalValue += bit * Math.pow(2, 7 - i);
+                });
+                
+                lbpMatrix[currentY-1][currentX-1] = decimalValue;
+                document.getElementById('decimalValue').textContent = decimalValue;
+
+                const lbpCell = lbpGridEl.children[(currentY - 1) * LBP_GRID_SIZE + (currentX - 1)];
+                if(lbpCell) {
+                   lbpCell.textContent = decimalValue;
+                   lbpCell.style.backgroundColor = `rgb(${decimalValue}, ${decimalValue}, ${decimalValue})`;
+                }
+                
+                currentX++;
+                if (currentX >= GRID_SIZE - 1) {
+                    currentX = 1;
+                    currentY++;
+                }
+            }, animationSpeed / 3);
+        }
+        
+        function calculateAndDisplayAllHistograms() {
+            let fullFeatureVector = [];
+            const cellWidth = LBP_GRID_SIZE / HIST_GRID_SIZE;
+            const cellHeight = LBP_GRID_SIZE / HIST_GRID_SIZE;
+
+            // First, color all LBP cells based on their bin
+            for (let y = 0; y < LBP_GRID_SIZE; y++) {
+                for (let x = 0; x < LBP_GRID_SIZE; x++) {
+                    const lbpVal = lbpMatrix[y][x];
+                    const binIndex = Math.floor(lbpVal / (256 / HIST_BINS));
+                    const lbpCell = lbpGridEl.children[y * LBP_GRID_SIZE + x];
+                    if(lbpCell) {
+                        lbpCell.style.backgroundColor = binColors[binIndex];
+                        lbpCell.style.color = '#1f2937'; // gray-800 for better contrast on light colors
+                    }
+                }
+            }
+
+            for (let gridY = 0; gridY < HIST_GRID_SIZE; gridY++) {
+                for (let gridX = 0; gridX < HIST_GRID_SIZE; gridX++) {
+                    const startX = gridX * cellWidth;
+                    const startY = gridY * cellHeight;
+                    
+                    const bins = new Array(HIST_BINS).fill(0);
+                    let maxBinCount = 0;
+
+                    for (let y = startY; y < startY + cellHeight; y++) {
+                        for (let x = startX; x < startX + cellWidth; x++) {
+                            const lbpVal = lbpMatrix[y][x];
+                            const binIndex = Math.floor(lbpVal / (256 / HIST_BINS));
+                            bins[binIndex]++;
+                            if (bins[binIndex] > maxBinCount) maxBinCount = bins[binIndex];
+                        }
+                    }
+
+                    const histContainer = document.getElementById(`hist-${gridY}-${gridX}`);
+                    for (let i = 0; i < HIST_BINS; i++) {
+                        const bar = histContainer.children[i];
+                        const height = maxBinCount > 0 ? (bins[i] / maxBinCount) * 100 : 0;
+                        bar.style.height = `${height}%`;
+                    }
+                    
+                    fullFeatureVector = fullFeatureVector.concat(bins);
+                }
+            }
+            
+            document.getElementById('featureVector').textContent = fullFeatureVector.join(',');
+            document.getElementById('statusText').textContent = 'Simulation Complete!';
+        }
+
+        function createLegend() {
+            legendContainerEl.innerHTML = '';
+            for (let i = 0; i < HIST_BINS; i++) {
+                const item = document.createElement('div');
+                item.classList.add('legend-item');
+                
+                const colorBox = document.createElement('div');
+                colorBox.classList.add('legend-color-box');
+                colorBox.style.backgroundColor = binColors[i];
+                
+                const text = document.createElement('span');
+                const rangeStart = i * (256 / HIST_BINS);
+                const rangeEnd = (i + 1) * (256 / HIST_BINS) - 1;
+                text.textContent = `${rangeStart}-${rangeEnd}`;
+                
+                item.appendChild(colorBox);
+                item.appendChild(text);
+                legendContainerEl.appendChild(item);
+            }
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.grid-cell').forEach(c => {
+                c.classList.remove('kernel-highlight', 'center-pixel-highlight');
+            });
+        }
+        
+        function clearAnalysis() {
+            document.getElementById('centerPixelValue').textContent = '';
+            document.getElementById('binaryString').innerHTML = '';
+            document.getElementById('decimalValue').textContent = '';
+            neighborGridEl.innerHTML = '';
+        }
+        
+        function clearHistograms() {
+            histogramsContainerEl.innerHTML = '';
+            for(let y = 0; y < HIST_GRID_SIZE; y++) {
+                for(let x = 0; x < HIST_GRID_SIZE; x++) {
+                    const container = document.createElement('div');
+                    container.id = `hist-${y}-${x}`;
+                    container.classList.add('histogram-container', 'h-24', 'flex', 'gap-px', 'items-end');
+                    for (let i = 0; i < HIST_BINS; i++) {
+                        const bar = document.createElement('div');
+                        bar.classList.add('histogram-bar');
+                        bar.style.height = '0%';
+                        bar.style.backgroundColor = binColors[i]; // Assign color here
+                        container.appendChild(bar);
+                    }
+                    histogramsContainerEl.appendChild(container);
+                }
+            }
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('startBtn').addEventListener('click', startAnimation);
+        document.getElementById('pauseBtn').addEventListener('click', pauseAnimation);
+        document.getElementById('resetBtn').addEventListener('click', resetSimulation);
+        document.getElementById('speedRange').addEventListener('input', (e) => {
+            animationSpeed = 1550 - e.target.value;
+            if (animationInterval && !isPaused) {
+                clearInterval(animationInterval);
+                animationInterval = setInterval(animationStep, animationSpeed);
+            }
+        });
+
+        // --- Initial setup ---
+        window.onload = resetSimulation;
+    </script>
+</body>
+</html>
